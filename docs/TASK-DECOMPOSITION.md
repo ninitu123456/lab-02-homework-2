@@ -1,51 +1,71 @@
-# Homework 2 — Task Decomposition
+# HW2 — Task Decomposition
 
-## Project Overview
+## 1. Project Overview
 
 **Project:** Concurrent FIFO Audio Visualizer Queue Engine
 
-**Objective:** Build an asynchronous FIFO audio processing engine with Web Audio API, cancellation, explicit resource cleanup, and real-time frequency visualization.
+**Objective:** Develop a browser-based audio processing application that handles concurrent enqueue requests using sequential FIFO execution, supports task cancellation, visualizes audio frequency data in real time, and safely manages Web Audio resources.
 
-## Task Breakdown
+**Technology Stack:** Next.js, React, TypeScript, Web Audio API, Canvas API, Vitest, Playwright.
 
-| ID | Task | Deliverable | Priority |
-|---|---|---|---|
-| T01 | Project setup and architecture | Next.js structure | High |
-| T02 | Audio task and queue definitions | AudioTask interface | High |
-| T03 | FIFO concurrency controller | AudioTaskQueue | Critical |
-| T04 | Fetch and audio decoding | Fetch + decodeAudioData | Critical |
-| T05 | AbortController cancellation | Cancellation handling | Critical |
-| T06 | Audio playback engine | AudioEngine | High |
-| T07 | AnalyserNode FFT processing | Frequency data | High |
-| T08 | Canvas visualization | AudioVisualizer | High |
-| T09 | React player integration | AudioPlayer | High |
-| T10 | Resource cleanup | Dispose and cancellation | Critical |
-| T11 | FIFO and cancellation testing | Automated tests | Critical |
-| T12 | Performance and memory testing | Test report | High |
-| T13 | Documentation and submission | README and evidence | Medium |
+## 2. Functional Decomposition
 
-## Dependency Flow
+| Task ID | Module | Responsibility | Deliverable | Dependency |
+|---|---|---|---|---|
+| T01 | Project Setup | Initialize Next.js, TypeScript and repository | Project foundation | None |
+| T02 | Audio Data | Define audio metadata and sample files | `data/tracks.ts`, `public/audio/` | T01 |
+| T03 | FIFO Queue | Implement sequential download and decoding | `audio-queue-controller.ts` | T01 |
+| T04 | Cancellation | Implement AbortController and queue disposal | Queue cancellation logic | T03 |
+| T05 | Audio Engine | Manage AudioContext, AnalyserNode and playback | `audio-engine.ts` | T03–T04 |
+| T06 | Visualization | Render FFT frequency data with requestAnimationFrame | `AudioVisualizer.tsx` | T05 |
+| T07 | User Interface | Integrate queue, playback and status messages | `AudioPlayer.tsx` | T02–T06 |
+| T08 | Unit Testing | Validate FIFO, errors and cancellation | 6 unit tests | T03–T04 |
+| T09 | Resource Testing | Validate playback cleanup and context disposal | 5 unit tests | T05 |
+| T10 | Stress Testing | Simulate 100 tasks and intermittent failures | 3 stress tests | T03 |
+| T11 | E2E Testing | Verify browser integration and user interactions | 5 Playwright tests | T07 |
+| T12 | Performance | Profile rendering and memory behavior | Performance report | T07 |
+| T13 | Documentation | Consolidate architecture, test evidence and instructions | Final documentation | T01–T12 |
 
-T01 → T02 → T03 → T04 → T05
+## 3. Implementation Sequence
 
-T04 → T06 → T07 → T08 → T09
+Project Setup → Audio Data and FIFO Queue → Cancellation → Audio Engine → FFT Visualizer → UI Integration → Automated Testing → Performance Profiling → Documentation.
 
-T05 + T09 → T10 → T11 → T12 → T13
+## 4. Core Design Decisions
 
-## Acceptance Criteria
+### FIFO Processing
 
-- Tasks are processed in FIFO order.
-- Only one download/decode task is active at a time.
-- Concurrent enqueue calls do not cause overlapping processing.
-- Cancellation uses AbortController.
-- Failed tasks do not block subsequent tasks.
-- AudioBufferSourceNodes are explicitly disconnected.
-- AudioContext is closed during disposal.
-- Visualizer uses AnalyserNode with FFT size 256 or 512.
-- Animation uses requestAnimationFrame without per-frame React state updates.
-- Animation frames are cancelled during cleanup.
-- FIFO, cancellation, memory and performance tests are documented.
+Concurrent calls to `enqueue()` are accepted, but the queue executes one task at a time. Each task performs download and decoding before the next task begins.
 
-## Verification Status
+### Cancellation
 
-Implementation is not considered fully verified until automated concurrency tests, cancellation tests, memory inspection and performance measurements have been completed.
+Each queued task owns an AbortController. Active network requests can be aborted, pending tasks can be rejected, and results from cancelled decoding operations are discarded.
+
+### Visualization
+
+The Canvas renderer uses `requestAnimationFrame` and reads frequency data directly from AnalyserNode. React state is not updated for each animation frame.
+
+### Resource Lifecycle
+
+AudioBufferSourceNode instances are stopped and disconnected when appropriate. The audio engine disconnects the analyser and closes AudioContext during disposal.
+
+## 5. Acceptance Criteria
+
+| Criterion | Verification |
+|---|---|
+| FIFO ordering | Unit tests |
+| Sequential processing | Unit and stress tests |
+| AbortController cancellation | Unit tests |
+| Error recovery | Unit and stress tests |
+| Audio node cleanup | AudioEngine unit tests |
+| FFT 256/512 support | Implementation and browser inspection |
+| Real-time visualization | Browser E2E and manual inspection |
+| Responsive playback interface | Playwright E2E |
+| Rendering performance | Chrome DevTools |
+| Memory behavior | Heap profiling and cleanup tests |
+
+## 6. Limitations
+
+- Audio decoding cannot be interrupted directly after `decodeAudioData()` begins; cancelled results are discarded.
+- FPS depends on device performance and display refresh rate.
+- Passing unit tests does not prove the complete absence of memory leaks.
+- Performance measurements must be reported using actual browser observations.
