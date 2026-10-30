@@ -142,6 +142,7 @@ npm run build
 - [Task Decomposition](docs/TASK-DECOMPOSITION.md)
 - [Automated Test Report](docs/TEST-REPORT.md)
 - [Performance Report](docs/PERFORMANCE-REPORT.md)
+- [AI Failure Audit](AI_Failure_Audit.md)
 
 ## Technical Limitations
 
